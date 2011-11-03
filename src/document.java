@@ -224,6 +224,9 @@ class document {
 
     public void setPages(String pages) {
         //TODO Split page string to start and end
+        String page[] = pages.split("-");
+        this.start_page = Integer.parseInt(page[0]);
+        this.end_page = Integer.parseInt(page[1]);
     }
 
     public String getIsbn() {

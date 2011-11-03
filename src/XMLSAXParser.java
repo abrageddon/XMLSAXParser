@@ -3,8 +3,6 @@ import java.io.IOException;
 import java.sql.*;
 import java.util.HashMap;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -85,11 +83,13 @@ public class XMLSAXParser extends DefaultHandler {
 
     public void characters(char[] ch, int start, int length) throws SAXException {
         String value = new String(ch, start, length);
-        tempVal += (value.trim().isEmpty() ? "" : " " + value.trim());
+        value = value.replaceAll("\n", "");
+        tempVal += (value.trim().isEmpty() ? "" : value.trim());
+//        System.out.println(value.trim());
     }
 
     public void endElement(String uri, String localName, String qName) throws SAXException {
-
+//        System.out.println("===");
         try {
             if (isGenreElement(qName)) {
                 try {
@@ -97,21 +97,19 @@ public class XMLSAXParser extends DefaultHandler {
                     Statement st = connection.createStatement();
                     st.executeUpdate("INSERT INTO tbl_dblp_document (" + tempDoc.getColumns() + ") VALUES (" + tempDoc.getValues() + ")");
 
-                    //TODO INSERT Author IDs into tbl_author_document_mapping
-
                     int docID = 0;
-                    if (tempDoc.getAuthorsIDs().size() > 0){
+                    if (tempDoc.getAuthorsIDs().size() > 0) {
                         st = connection.createStatement();
                         //TODO find a better way to get last added document
                         //largest id should be newest, unless someone manually input an id
                         ResultSet docIDQ = st.executeQuery("SELECT max(id) FROM tbl_dblp_document");
-                        if(docIDQ.next()){
+                        if (docIDQ.next()) {
                             docID = docIDQ.getInt(1);
                         }
                     }
-                    for (Integer author: tempDoc.getAuthorsIDs()){
+                    for (Integer author : tempDoc.getAuthorsIDs()) {
                         st = connection.createStatement();
-                        st.executeUpdate("INSERT INTO tbl_author_document_mapping (doc_id, author_id) VALUES ('"+docID+"','" + author + "')");
+                        st.executeUpdate("INSERT INTO tbl_author_document_mapping (doc_id, author_id) VALUES ('" + docID + "','" + author + "')");
                         //TODO create one multi statement
                     }
 
@@ -120,7 +118,7 @@ public class XMLSAXParser extends DefaultHandler {
                 }
 
 
-            } else if (qName.equalsIgnoreCase("Author")) {
+            }else if (qName.equalsIgnoreCase("Author")) {
                 tempDoc.addAuthorsIDs(getPersonID(tempVal.trim()));
             } else if (qName.equalsIgnoreCase("Editor")) {
                 tempDoc.setEditor_id(getPersonID(tempVal.trim()));
