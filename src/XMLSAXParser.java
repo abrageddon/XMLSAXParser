@@ -24,7 +24,7 @@ public class XMLSAXParser extends DefaultHandler {
     HashMap<String, Integer> publishers;
     private String tempVal;
     //to maintain context
-    private singleBook tempBook;
+    private document tempDoc;
     private Connection connection;
 
     public XMLSAXParser() {
@@ -85,7 +85,7 @@ public class XMLSAXParser extends DefaultHandler {
 
     public void characters(char[] ch, int start, int length) throws SAXException {
         String value = new String(ch, start, length);
-        tempVal += value.trim();
+        tempVal += (value.trim().isEmpty()?"":" "+value.trim());
     }
 
     public void endElement(String uri, String localName, String qName) throws SAXException {
