@@ -2,7 +2,6 @@
 import java.io.IOException;
 import java.sql.*;
 import java.util.HashMap;
-import java.util.List;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -15,11 +14,13 @@ import org.xml.sax.helpers.DefaultHandler;
 
 public class XMLSAXParser extends DefaultHandler {
 
-    List myBooks;
-    HashMap<String, Integer> genres;
-    HashMap<String, Integer> people;
-    HashMap<String, Integer> booktitle;
-    HashMap<String, Integer> publishers;
+    private long startTime;
+    private long endTime;
+    private static final boolean useHashMap = true;
+    private HashMap<String, Integer> genres;
+    private HashMap<String, Integer> people;
+    private HashMap<String, Integer> booktitle;
+    private HashMap<String, Integer> publishers;
     private String tempVal;
     //to maintain context
     private document tempDoc;
@@ -34,8 +35,9 @@ public class XMLSAXParser extends DefaultHandler {
         String password = "testpass";
         String username = "testuser";
         String server = "localhost";
+        String tablename = "bookdb";
         try {
-            connection = DriverManager.getConnection("jdbc:mysql://" + server + ":3306/bookdb", username, password);
+            connection = DriverManager.getConnection("jdbc:mysql://" + server + ":3306/" + tablename, username, password);
         } catch (SQLException ex) {
             System.out.println(ex.getMessage());
         }
@@ -59,9 +61,13 @@ public class XMLSAXParser extends DefaultHandler {
             //get a new instance of parser
             SAXParser sp = spf.newSAXParser();
 
+
             //parse the file and also register this class for call backs
+            startTime = System.currentTimeMillis();
             sp.parse("final-data.xml", this);//SMALL
 //            sp.parse("dblp-data.xml", this);//LARGE
+            endTime = System.currentTimeMillis();
+            System.out.println("Execution Time: " + (endTime - startTime));
 
         } catch (SAXException se) {
             System.out.println(se.getMessage());
@@ -84,7 +90,6 @@ public class XMLSAXParser extends DefaultHandler {
     public void characters(char[] ch, int start, int length) throws SAXException {
         String value = new String(ch, start, length);
         tempVal += value.replaceAll("\n", "").trim();
-//        System.out.println(value.trim());
     }
 
     public void endElement(String uri, String localName, String qName) throws SAXException {
@@ -117,7 +122,7 @@ public class XMLSAXParser extends DefaultHandler {
                 }
 
 
-            }else if (qName.equalsIgnoreCase("Author")) {
+            } else if (qName.equalsIgnoreCase("Author")) {
                 tempDoc.addAuthorsIDs(getPersonID(tempVal.trim()));
             } else if (qName.equalsIgnoreCase("Editor")) {
                 tempDoc.setEditor_id(getPersonID(tempVal.trim()));
@@ -171,7 +176,7 @@ public class XMLSAXParser extends DefaultHandler {
 
     private Integer getGenreID(String genreName) {
         Integer ret = 0;
-        if (genres.containsKey(genreName)) {
+        if (useHashMap && genres.containsKey(genreName)) {
             return genres.get(genreName);
         }
         try {
@@ -179,7 +184,9 @@ public class XMLSAXParser extends DefaultHandler {
             ResultSet genreID = st.executeQuery("SELECT * FROM tbl_genres WHERE genre_name = '" + cleanSQL(genreName) + "'");
             if (genreID.next()) {
                 int id = genreID.getInt("id");
-                genres.put(genreName, id);
+                if (useHashMap) {
+                    genres.put(genreName, id);
+                }
                 return id;
             } else {
                 st = connection.createStatement();
@@ -194,7 +201,7 @@ public class XMLSAXParser extends DefaultHandler {
 
     private Integer getPersonID(String personName) {
         Integer ret = 0;
-        if (people.containsKey(personName)) {
+        if (useHashMap && people.containsKey(personName)) {
             return people.get(personName);
         }
         try {
@@ -202,7 +209,9 @@ public class XMLSAXParser extends DefaultHandler {
             ResultSet personID = st.executeQuery("SELECT * FROM tbl_people WHERE name = '" + cleanSQL(personName) + "'");
             if (personID.next()) {
                 int id = personID.getInt("id");
-                people.put(personName, id);
+                if (useHashMap) {
+                    people.put(personName, id);
+                }
                 return id;
             } else {
                 st = connection.createStatement();
@@ -217,7 +226,7 @@ public class XMLSAXParser extends DefaultHandler {
 
     private Integer getBooktitleID(String booktitleName) {
         Integer ret = 0;
-        if (booktitle.containsKey(booktitleName)) {
+        if (useHashMap && booktitle.containsKey(booktitleName)) {
             return booktitle.get(booktitleName);
         }
         try {
@@ -225,7 +234,9 @@ public class XMLSAXParser extends DefaultHandler {
             ResultSet booktitleID = st.executeQuery("SELECT * FROM tbl_booktitle WHERE title = '" + cleanSQL(booktitleName) + "'");
             if (booktitleID.next()) {
                 int id = booktitleID.getInt("id");
-                booktitle.put(booktitleName, id);
+                if (useHashMap) {
+                    booktitle.put(booktitleName, id);
+                }
                 return id;
             } else {
                 st = connection.createStatement();
@@ -240,7 +251,7 @@ public class XMLSAXParser extends DefaultHandler {
 
     private Integer getPublisherID(String publisherName) {
         Integer ret = 0;
-        if (publishers.containsKey(publisherName)) {
+        if (useHashMap && publishers.containsKey(publisherName)) {
             return publishers.get(publisherName);
         }
         try {
@@ -248,7 +259,9 @@ public class XMLSAXParser extends DefaultHandler {
             ResultSet publisherID = st.executeQuery("SELECT * FROM tbl_publisher WHERE publisher_name = '" + cleanSQL(publisherName) + "'");
             if (publisherID.next()) {
                 int id = publisherID.getInt("id");
-                publishers.put(publisherName, id);
+                if (useHashMap) {
+                    publishers.put(publisherName, id);
+                }
                 return id;
             } else {
                 st = connection.createStatement();
