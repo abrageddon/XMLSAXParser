@@ -83,8 +83,7 @@ public class XMLSAXParser extends DefaultHandler {
 
     public void characters(char[] ch, int start, int length) throws SAXException {
         String value = new String(ch, start, length);
-        value = value.replaceAll("\n", "");
-        tempVal += (value.trim().isEmpty() ? "" : value.trim());
+        tempVal += value.replaceAll("\n", "").trim();
 //        System.out.println(value.trim());
     }
 
