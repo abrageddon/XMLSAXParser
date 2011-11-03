@@ -223,10 +223,17 @@ class document {
     }
 
     public void setPages(String pages) {
-        //TODO Split page string to start and end
         String page[] = pages.split("-");
-        this.start_page = Integer.parseInt(page[0]);
-        this.end_page = Integer.parseInt(page[1]);
+        if (this.start_page == null ){
+            if (page.length > 0 && page[0] != null && !page[0].isEmpty()){
+                this.start_page = Integer.parseInt(page[0]);
+            }
+        }
+        if (this.end_page == null ){
+            if (page.length > 1 && page[1] != null && !page[1].isEmpty()){
+                this.end_page = Integer.parseInt(page[1]);
+            }
+        }
     }
 
     public String getIsbn() {

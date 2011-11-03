@@ -64,8 +64,8 @@ public class XMLSAXParser extends DefaultHandler {
 
             //parse the file and also register this class for call backs
             startTime = System.currentTimeMillis();
-            sp.parse("final-data.xml", this);//SMALL
-//            sp.parse("dblp-data.xml", this);//LARGE
+//            sp.parse("final-data.xml", this);//SMALL
+            sp.parse("dblp-data.xml", this);//LARGE
             endTime = System.currentTimeMillis();
             System.out.println("Execution Time: " + (endTime - startTime));
 
