@@ -288,7 +288,7 @@ public class XMLSAXParser extends DefaultHandler {
                 st = connection.createStatement();
                 st.executeUpdate("INSERT INTO tbl_publisher (publisher_name) VALUE ('" + cleanSQL(publisherName) + "')");
                 st.close();
-                return getBooktitleID(publisherName);
+                return getPublisherID(publisherName);
             }
         } catch (SQLException ex) {
             System.out.println(ex.getMessage());
