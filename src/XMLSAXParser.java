@@ -79,27 +79,65 @@ public class XMLSAXParser extends DefaultHandler {
         //reset
         tempVal = "";
         if (isGenreElement(qName)) {
-            getGenreID(qName);//TODO make book object
+            tempDoc = new document(getGenreID(qName));
         }
     }
 
     public void characters(char[] ch, int start, int length) throws SAXException {
         String value = new String(ch, start, length);
-        tempVal += (value.trim().isEmpty()?"":" "+value.trim());
+        tempVal += (value.trim().isEmpty() ? "" : " " + value.trim());
     }
 
     public void endElement(String uri, String localName, String qName) throws SAXException {
 
-        if (qName.equalsIgnoreCase("Employee")) {
-            //add it to the list
-        } else if (qName.equalsIgnoreCase("Author") || qName.equalsIgnoreCase("Editor")) {
-            getPersonID(tempVal);
-        } else if (qName.equalsIgnoreCase("Booktitle")) {
-            getBooktitleID(tempVal);
-        } else if (qName.equalsIgnoreCase("Publisher")) {
-            getPublisherID(tempVal);
-        }
+        try {
+            if (isGenreElement(qName)) {
+                try {
+                    //add it to the db;
+                    Statement st = connection.createStatement();
+                    st.executeUpdate("INSERT INTO tbl_dblp_document (" + tempDoc.getColumns() + ") VALUES (" + tempDoc.getValues() + ")");
 
+                } catch (SQLException ex) {
+                    System.out.println(ex.getMessage());
+                }
+
+
+            } else if (qName.equalsIgnoreCase("Author")) {
+                tempDoc.addAuthorsIDs(getPersonID(tempVal.trim()));
+            } else if (qName.equalsIgnoreCase("Editor")) {
+                tempDoc.setEditor_id(getPersonID(tempVal.trim()));
+            } else if (qName.equalsIgnoreCase("Booktitle")) {
+                tempDoc.setBooktitle_id(getBooktitleID(tempVal.trim()));
+            } else if (qName.equalsIgnoreCase("Publisher")) {
+                tempDoc.setPublisher_id(getPublisherID(tempVal.trim()));
+            } else if (qName.equalsIgnoreCase("Title")) {
+                tempDoc.setTitle(tempVal.trim());
+            } else if (qName.equalsIgnoreCase("Pages")) {
+                tempDoc.setPages(tempVal.trim());
+            } else if (qName.equalsIgnoreCase("Year")) {
+                tempDoc.setYear(Integer.parseInt(tempVal.trim()));
+            } else if (qName.equalsIgnoreCase("Volume")) {
+                tempDoc.setVolume(Integer.parseInt(tempVal.trim()));
+            } else if (qName.equalsIgnoreCase("Number")) {
+                tempDoc.setNumber(Integer.parseInt(tempVal.trim()));
+            } else if (qName.equalsIgnoreCase("Url")) {
+                tempDoc.setUrl(tempVal.trim());
+            } else if (qName.equalsIgnoreCase("ee")) {
+                tempDoc.setEe(tempVal.trim());
+            } else if (qName.equalsIgnoreCase("CDrom")) {
+                tempDoc.setCdrom(tempVal.trim());
+            } else if (qName.equalsIgnoreCase("Cite")) {
+                tempDoc.setCite(tempVal.trim());
+            } else if (qName.equalsIgnoreCase("Crossref")) {
+                tempDoc.setCrossref(tempVal.trim());
+            } else if (qName.equalsIgnoreCase("ISBN")) {
+                tempDoc.setIsbn(tempVal.trim());
+            } else if (qName.equalsIgnoreCase("Series")) {
+                tempDoc.setSeries(tempVal.trim());
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid Number: " + e.getMessage());
+        }
     }
 
     private boolean isGenreElement(String qName) {
