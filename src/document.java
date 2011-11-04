@@ -228,11 +228,15 @@ class document {
             if (page.length > 0 && page[0] != null && !page[0].isEmpty()){
                 this.start_page = Integer.parseInt(page[0]);
             }
+        } else if (page.length > 0 && page[0] != null && !page[0].isEmpty()) {
+            System.out.println("Multiple start_page: " + page[0]);
         }
         if (this.end_page == null ){
             if (page.length > 1 && page[1] != null && !page[1].isEmpty()){
                 this.end_page = Integer.parseInt(page[1]);
             }
+        } else if (page.length > 1 && page[1] != null && !page[1].isEmpty()) {
+            System.out.println("Multiple end_page: " + page[1]);
         }
     }
 

@@ -16,13 +16,15 @@ public class XMLSAXParser extends DefaultHandler {
 
     private long startTime;
     private long endTime;
-    private static final boolean useHashMap = false;
+    //Toggle optimizations
+    private static final boolean useHashMap = true;
+    private static final boolean useCombinedAuthorStatement = true;
+    //END Toggles
     private HashMap<String, Integer> genres;
     private HashMap<String, Integer> people;
     private HashMap<String, Integer> booktitle;
     private HashMap<String, Integer> publishers;
     private String tempVal;
-    //to maintain context
     private document tempDoc;
     private Connection connection;
 
@@ -64,8 +66,8 @@ public class XMLSAXParser extends DefaultHandler {
 
             //parse the file and also register this class for call backs
             startTime = System.currentTimeMillis();
-//            sp.parse("final-data.xml", this);//SMALL
-            sp.parse("dblp-data.xml", this);//LARGE
+            sp.parse("final-data.xml", this);//SMALL
+//            sp.parse("dblp-data.xml", this);//LARGE
             endTime = System.currentTimeMillis();
             System.out.println("Execution Time: " + (endTime - startTime));
 
@@ -89,15 +91,16 @@ public class XMLSAXParser extends DefaultHandler {
 
     public void characters(char[] ch, int start, int length) throws SAXException {
         String value = new String(ch, start, length);
-        tempVal += value.replaceAll("\n", "").trim();
+        tempVal += value.replaceAll("\n", "");
     }
 
     public void endElement(String uri, String localName, String qName) throws SAXException {
-//        System.out.println("===");
         try {
             if (isGenreElement(qName)) {
                 try {
-                    //add it to the db;
+                    getGenreID(qName);//Add to genre database but doesnt connect to anything
+
+                    //add book to the db;
                     Statement st = connection.createStatement();
                     st.executeUpdate("INSERT INTO tbl_dblp_document (" + tempDoc.getColumns() + ") VALUES (" + tempDoc.getValues() + ")");
 
@@ -111,12 +114,23 @@ public class XMLSAXParser extends DefaultHandler {
                             docID = docIDQ.getInt(1);
                         }
                     }
-                    for (Integer author : tempDoc.getAuthorsIDs()) {
-                        st = connection.createStatement();
-                        st.executeUpdate("INSERT INTO tbl_author_document_mapping (doc_id, author_id) VALUES ('" + docID + "','" + author + "')");
-                        //TODO create one multi statement
+                    if (useCombinedAuthorStatement) {
+                        String values = "";
+                        for (Integer author : tempDoc.getAuthorsIDs()) {
+                            values += " ('" + docID + "', '" + author + "'),";
+                        }
+                        if (!values.isEmpty()) {
+                            values = values.substring(0, values.length() - 1);
+                            st = connection.createStatement();
+                            st.executeUpdate("INSERT INTO tbl_author_document_mapping (doc_id, author_id) VALUES " + values);
+                        }
+                    } else {
+                        for (Integer author : tempDoc.getAuthorsIDs()) {
+                            st = connection.createStatement();
+                            st.executeUpdate("INSERT INTO tbl_author_document_mapping (doc_id, author_id) VALUES ('" + docID + "','" + author + "')");
+                        }
                     }
-
+                    st.close();
                 } catch (SQLException ex) {
                     System.out.println(ex.getMessage());
                 }
@@ -187,10 +201,12 @@ public class XMLSAXParser extends DefaultHandler {
                 if (useHashMap) {
                     genres.put(genreName, id);
                 }
+                st.close();
                 return id;
             } else {
                 st = connection.createStatement();
                 st.executeUpdate("INSERT INTO tbl_genres (genre_name) VALUE ('" + cleanSQL(genreName) + "')");
+                st.close();
                 return getGenreID(genreName);
             }
         } catch (SQLException ex) {
@@ -212,10 +228,12 @@ public class XMLSAXParser extends DefaultHandler {
                 if (useHashMap) {
                     people.put(personName, id);
                 }
+                st.close();
                 return id;
             } else {
                 st = connection.createStatement();
                 st.executeUpdate("INSERT INTO tbl_people (name) VALUE ('" + cleanSQL(personName) + "')");
+                st.close();
                 return getPersonID(personName);
             }
         } catch (SQLException ex) {
@@ -237,10 +255,12 @@ public class XMLSAXParser extends DefaultHandler {
                 if (useHashMap) {
                     booktitle.put(booktitleName, id);
                 }
+                st.close();
                 return id;
             } else {
                 st = connection.createStatement();
                 st.executeUpdate("INSERT INTO tbl_booktitle (title) VALUE ('" + cleanSQL(booktitleName) + "')");
+                st.close();
                 return getBooktitleID(booktitleName);
             }
         } catch (SQLException ex) {
@@ -262,11 +282,13 @@ public class XMLSAXParser extends DefaultHandler {
                 if (useHashMap) {
                     publishers.put(publisherName, id);
                 }
+                st.close();
                 return id;
             } else {
                 st = connection.createStatement();
                 st.executeUpdate("INSERT INTO tbl_publisher (publisher_name) VALUE ('" + cleanSQL(publisherName) + "')");
-                return getBooktitleID(publisherName);
+                st.close();
+                return getPublisherID(publisherName);
             }
         } catch (SQLException ex) {
             System.out.println(ex.getMessage());
