@@ -98,8 +98,6 @@ public class XMLSAXParser extends DefaultHandler {
         try {
             if (isGenreElement(qName)) {
                 try {
-                    getGenreID(qName);//Add to genre database but doesnt connect to anything
-
                     //add book to the db;
                     Statement st = connection.createStatement();
                     st.executeUpdate("INSERT INTO tbl_dblp_document (" + tempDoc.getColumns() + ") VALUES (" + tempDoc.getValues() + ")");

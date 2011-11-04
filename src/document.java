@@ -4,7 +4,8 @@ import java.util.ArrayList;
 class document {
 
     document(Integer genreID) {
-        this();//TODO add genre_id to database?
+        this();
+        this.genre_id = genreID;
     }
 
     public ArrayList<Integer> getAuthorsIDs() {
@@ -30,6 +31,7 @@ class document {
     private ArrayList<Integer> authorsIDs;
     private Integer editor_id;
     private Integer booktitle_id;
+    private Integer genre_id;
     private Integer publisher_id;
 
     public document() {
@@ -82,6 +84,9 @@ class document {
         }
         if (booktitle_id != null) {
             col += "booktitle_id,";
+        }
+        if (genre_id != null) {
+            col += "genre_id,";
         }
         if (publisher_id != null) {
             col += "publisher_id,";
@@ -139,6 +144,9 @@ class document {
         }
         if (booktitle_id != null) {
             val += "'" + booktitle_id + "',";
+        }
+        if (genre_id != null) {
+            val += "'" + genre_id + "',";
         }
         if (publisher_id != null) {
             val += "'" + publisher_id + "',";
@@ -237,6 +245,18 @@ class document {
             }
         } else if (page.length > 1 && page[1] != null && !page[1].isEmpty()) {
             System.out.println("Multiple end_page: " + page[1]);
+        }
+    }
+
+    public Integer getGenre_id() {
+        return genre_id;
+    }
+
+    public void setGenre_id(Integer genre_id) {
+        if (this.genre_id == null) {
+            this.genre_id = genre_id;
+        } else {
+            System.out.println("Multiple genre_id: " + genre_id);
         }
     }
 
