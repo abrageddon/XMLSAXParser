@@ -16,7 +16,7 @@ public class XMLSAXParser extends DefaultHandler {
 
     private long startTime;
     private long endTime;
-    private static final boolean useHashMap = true;
+    private static final boolean useHashMap = false;
     private HashMap<String, Integer> genres;
     private HashMap<String, Integer> people;
     private HashMap<String, Integer> booktitle;
