@@ -24,33 +24,46 @@ public class SqlGetIDTask implements Callable {
     public Object call() {
         Integer ret = 0;
 
-        synchronized (parent) {
+        synchronized (map) {
             if (map.containsKey(name)) {
                 return map.get(name);
             }
-            try {
-                Statement st = connection.createStatement();
-                ResultSet results = st.executeQuery("SELECT * FROM " + table + " WHERE " + column + " = '" + cleanSQL(name) + "'");
-                if (results.next()) {
-                    int id = results.getInt("id");
-                    st.close();
-                    map.put(name, id);
-                    return id;
-                } else {
-                    int id;
-                    st = connection.createStatement();
-                    //Sync all uses of getLastID()
-                    st.executeUpdate("INSERT INTO " + table + " (" + column + ") VALUE ('" + cleanSQL(name) + "')");
-                    id = getLastID();
-                    st.close();
-                    map.put(name, id);
-                    return id;
-                }
-            } catch (SQLException ex) {
-                System.out.println(ex.getMessage());
-            }
-
         }
+        try {
+            Statement st = connection.createStatement();
+            ResultSet results = st.executeQuery("SELECT * FROM " + table + " WHERE " + column + " = '" + cleanSQL(name) + "'");
+            if (results.next()) {
+                int id = results.getInt("id");
+                st.close();
+
+                synchronized (map) {
+                    map.put(name, id);
+                }
+                return id;
+            } else {
+                int id;
+                st = connection.createStatement();
+                //Sync all uses of getLastID()
+                synchronized (parent) {
+                    st.executeUpdate("INSERT INTO " + table + " (" + column + ") VALUE ('" + cleanSQL(name) + "')");
+                    st = connection.createStatement();
+                    ResultSet lastIDQ = st.executeQuery("SELECT LAST_INSERT_ID()");
+                    lastIDQ.next();
+                    id = lastIDQ.getInt(1);
+                }
+                st.close();
+
+                synchronized (map) {
+                    map.put(name, id);
+                }
+                return id;
+
+            }
+        } catch (SQLException ex) {
+            System.out.println(ex.getMessage());
+        }
+
+
         return ret;
 
     }
@@ -58,18 +71,5 @@ public class SqlGetIDTask implements Callable {
     public static String cleanSQL(String arg) {
         String rtn = arg.replace("\\", "\\\\");
         return rtn.replace("'", "''");
-    }
-
-    private Integer getLastID() throws SQLException {
-        //MUST SYNC all uses of getLastID()
-        Statement st = connection.createStatement();
-        ResultSet lastIDQ = st.executeQuery("SELECT LAST_INSERT_ID()");
-        if (lastIDQ.next()) {
-            int id = lastIDQ.getInt(1);
-            st.close();
-            return id;
-        } else {
-            return null;
-        }
     }
 }

@@ -7,6 +7,7 @@ public class SqlInsertTask implements Callable {
     private String SQLQ;
     private Connection conn;
     private XMLSAXParser parent;
+    private document doc;
 
     SqlInsertTask(XMLSAXParser aThis, Connection connection, String SQLQuery) {
         this.SQLQ = SQLQuery;
@@ -14,9 +15,17 @@ public class SqlInsertTask implements Callable {
         parent = aThis;
     }
 
+    SqlInsertTask(XMLSAXParser aThis, Connection connection, document tempDoc) {
+        this(aThis, connection, "INSERT INTO tbl_dblp_document ");
+        this.doc = tempDoc;
+    }
+
     public Object call() {
         int rtn = 0;
         try {
+            if (doc != null){
+                SQLQ += doc.getColAndVal();
+            }
             //Sync to parent to prevent adding doc before getting the last one's ID
             Statement st = conn.createStatement();
             synchronized (parent) {

@@ -107,13 +107,12 @@ public class XMLSAXParser extends DefaultHandler {
                     //add book to the db;
 
                     Statement st = connection.createStatement();
-                    String addDoc = "INSERT INTO tbl_dblp_document " + tempDoc.getColAndVal();
                     Future FDocID;
                     Integer docID = 0;
                     if (useParallel) {
-                        FDocID = eservice.submit(new SqlInsertTask(this, connection, addDoc));
+                        FDocID = eservice.submit(new SqlInsertTask(this, connection, tempDoc));
                     } else {
-                        st.executeUpdate(addDoc);
+                        st.executeUpdate("INSERT INTO tbl_dblp_document " + tempDoc.getColAndVal());
                         docID = getLastID();
                     }
 
