@@ -1,6 +1,5 @@
 
 import java.sql.*;
-import java.util.Random;
 import java.util.concurrent.*;
 
 public class SqlInsertTask implements Callable {
@@ -25,35 +24,21 @@ public class SqlInsertTask implements Callable {
     public Object call() {
         int rtn = 0;
         try {
-            //TODO figure out if 2 adds can happen before one getLastID() is run
-            //This could result in a mistaken docID being returned.
-//            synchronized (parent) {
-//            Random rand = new Random();
-//            Integer rInt = rand.nextInt();
-
-//            System.out.println("S:" + rInt );
+            //Sync to parent to prevent adding doc before getting the last one's ID
+            synchronized (parent) {
                 Statement st = conn.createStatement();
                 st.executeUpdate(SQLQ);
-//                Thread.sleep(1000);//DEBUG
-                rtn = getLastID();
-
-//            System.out.println("E:" + rInt );
-//            }
+//                Thread.currentThread().sleep(200);//DEBUG
+                st = conn.createStatement();
+                ResultSet lastIDQ = st.executeQuery("SELECT LAST_INSERT_ID()");
+                lastIDQ.next();
+                rtn = lastIDQ.getInt(1);
+//                System.out.println("IT:" + rtn + " " + lastIDQ.getInt(1) );//DEBUG
+                st.close();
+            }
         } catch (Exception e) {
             System.err.println(e.getMessage());
         }
         return rtn;
-    }
-
-    private Integer getLastID() throws SQLException {
-        Statement st = conn.createStatement();
-        ResultSet lastIDQ = st.executeQuery("SELECT LAST_INSERT_ID()");
-        if (lastIDQ.next()) {
-            int id = lastIDQ.getInt(1);
-            st.close();
-            return id;
-        } else {
-            return null;
-        }
     }
 }

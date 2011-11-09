@@ -19,7 +19,6 @@ public class SQLTask implements Callable {
     public SQLTask(Connection conn, String SQLQuery, Future docID, Integer authID) throws InterruptedException, ExecutionException {
         this(conn, SQLQuery + " ('" + docID.get() + "','" + authID + "')" );
     }
-    //VALUES ('" + docID + "','" + author + "')
 
     public Object call() {
         int rtn = 0;
