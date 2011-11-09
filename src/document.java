@@ -6,11 +6,17 @@ class document {
     private Future publisher_idFuture;
     private Future booktitle_idFuture;
     private Future editor_idFuture;
+    private Future genre_idFuture;
     private ArrayList<Future> authorsIDsFuture;
 
     document(Integer genreID) {
         this();
         this.genre_id = genreID;
+    }
+
+    document(Future genreID) {
+        this();
+        this.genre_idFuture = genreID;
     }
 
     public ArrayList<Integer> getAuthorsIDs() {
@@ -50,6 +56,9 @@ class document {
 
         //Finalize Future Values
         try {
+            if (genre_idFuture != null){
+                setGenre_id((Integer) genre_idFuture.get());
+            }
             if (editor_idFuture != null){
                 setEditor_id((Integer) editor_idFuture.get());
             }

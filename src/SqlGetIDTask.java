@@ -6,15 +6,13 @@ import java.util.concurrent.Callable;
 public class SqlGetIDTask implements Callable {
 
     private Connection connection;
-    private XMLSAXParser parent;
     private HashMap<String, Integer> map;
     private String name;
     private String table;
     private String column;
 
-    public SqlGetIDTask(XMLSAXParser aThis, Connection connection, HashMap<String, Integer> map, String table, String column, String name) {
+    public SqlGetIDTask(Connection connection, HashMap<String, Integer> map, String table, String column, String name) {
         this.connection = connection;
-        this.parent = aThis;
         this.map = map;
         this.name = name;
         this.table = table;
@@ -44,7 +42,7 @@ public class SqlGetIDTask implements Callable {
                 int id;
                 st = connection.createStatement();
                 //Sync all uses of getLastID()
-                synchronized (parent) {
+                synchronized (connection) {
                     st.executeUpdate("INSERT INTO " + table + " (" + column + ") VALUE ('" + cleanSQL(name) + "')");
                     st = connection.createStatement();
                     ResultSet lastIDQ = st.executeQuery("SELECT LAST_INSERT_ID()");
