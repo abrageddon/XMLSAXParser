@@ -42,6 +42,7 @@ CREATE TABLE tbl_dblp_document (
 	crossref      VARCHAR(75),
 	isbn          VARCHAR(21),
 	series        VARCHAR(100), 
+	genre_id      INTEGER REFERENCES tbl_genres(id),
 	editor_id     INTEGER REFERENCES tbl_people(id),
 	booktitle_id  INTEGER REFERENCES tbl_booktitle(id),
 	publisher_id  INTEGER REFERENCES tbl_publisher(id),

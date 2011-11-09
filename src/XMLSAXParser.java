@@ -107,7 +107,6 @@ public class XMLSAXParser extends DefaultHandler {
         try {
             if (isGenreElement(qName)) {
                 try {
-
                     //add book to the db;
 
                     Statement st = connection.createStatement();
