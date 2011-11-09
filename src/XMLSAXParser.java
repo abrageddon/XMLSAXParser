@@ -157,7 +157,6 @@ public class XMLSAXParser extends DefaultHandler {
                     System.out.println(ex.getMessage());
                 }
 
-//TODO enforce string length limits
             } else if (qName.equalsIgnoreCase("Author")) {
                 tempDoc.addAuthorsIDs(getPersonID(tempVal.trim()));
             } else if (qName.equalsIgnoreCase("Editor")) {
@@ -167,7 +166,7 @@ public class XMLSAXParser extends DefaultHandler {
             } else if (qName.equalsIgnoreCase("Publisher")) {
                 tempDoc.setPublisher_id(getPublisherID(tempVal.trim()));
             } else if (qName.equalsIgnoreCase("Title")) {
-                tempDoc.setTitle(tempVal.substring(0, Math.min(tempVal.length(), 301) ).trim());
+                tempDoc.setTitle(tempVal.substring(0, Math.min(tempVal.length(), 300) ).trim());
             } else if (qName.equalsIgnoreCase("Pages")) {
                 tempDoc.setPages(tempVal.trim());
             } else if (qName.equalsIgnoreCase("Year")) {
@@ -177,19 +176,19 @@ public class XMLSAXParser extends DefaultHandler {
             } else if (qName.equalsIgnoreCase("Number")) {
                 tempDoc.setNumber(Integer.parseInt(tempVal.trim()));
             } else if (qName.equalsIgnoreCase("Url")) {
-                tempDoc.setUrl(tempVal.substring(0, Math.min(tempVal.length(), 201) ).trim());
+                tempDoc.setUrl(tempVal.substring(0, Math.min(tempVal.length(), 200) ).trim());
             } else if (qName.equalsIgnoreCase("ee")) {
-                tempDoc.setEe(tempVal.substring(0, Math.min(tempVal.length(), 101) ).trim());
+                tempDoc.setEe(tempVal.substring(0, Math.min(tempVal.length(), 100) ).trim());
             } else if (qName.equalsIgnoreCase("CDrom")) {
-                tempDoc.setCdrom(tempVal.substring(0, Math.min(tempVal.length(), 76) ).trim());
+                tempDoc.setCdrom(tempVal.substring(0, Math.min(tempVal.length(), 75) ).trim());
             } else if (qName.equalsIgnoreCase("Cite")) {
-                tempDoc.setCite(tempVal.substring(0, Math.min(tempVal.length(), 76) ).trim());
+                tempDoc.setCite(tempVal.substring(0, Math.min(tempVal.length(), 75) ).trim());
             } else if (qName.equalsIgnoreCase("Crossref")) {
-                tempDoc.setCrossref(tempVal.substring(0, Math.min(tempVal.length(), 76) ).trim());
+                tempDoc.setCrossref(tempVal.substring(0, Math.min(tempVal.length(), 75) ).trim());
             } else if (qName.equalsIgnoreCase("ISBN")) {
-                tempDoc.setIsbn(tempVal.substring(0, Math.min(tempVal.length(), 22) ).trim());
+                tempDoc.setIsbn(tempVal.substring(0, Math.min(tempVal.length(), 21) ).trim());
             } else if (qName.equalsIgnoreCase("Series")) {
-                tempDoc.setSeries(tempVal.substring(0, Math.min(tempVal.length(), 101) ).trim());
+                tempDoc.setSeries(tempVal.substring(0, Math.min(tempVal.length(), 100) ).trim());
             }
         } catch (NumberFormatException e) {
             System.out.println("Invalid Number: " + e.getMessage());
@@ -246,7 +245,7 @@ public class XMLSAXParser extends DefaultHandler {
     }
 
     private Integer getPersonID(String personName) {
-        Integer ret = 0;
+        Integer ret = 0;//TODO Limit to sql fields size
         if (useHashMap && people.containsKey(personName)) {
             return people.get(personName);
         }
