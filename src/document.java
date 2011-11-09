@@ -1,7 +1,12 @@
 
 import java.util.ArrayList;
+import java.util.concurrent.Future;
 
 class document {
+    private Future publisher_idFuture;
+    private Future booktitle_idFuture;
+    private Future editor_idFuture;
+    private ArrayList<Future> authorsIDsFuture;
 
     document(Integer genreID) {
         this();
@@ -36,132 +41,29 @@ class document {
 
     public document() {
         authorsIDs = new ArrayList<Integer>();
+        authorsIDsFuture = new ArrayList<Future>();
     }
-
-    String getColumns() {
-        String col = "";
-        if (title != null) {
-            col += "title,";
-        }
-        if (start_page != null) {
-            col += "start_page,";
-        }
-        if (end_page != null) {
-            col += "end_page,";
-        }
-        if (year != null) {
-            col += "year,";
-        }
-        if (volume != null) {
-            col += "volume,";
-        }
-        if (number != null) {
-            col += "number,";
-        }
-        if (url != null) {
-            col += "url,";
-        }
-        if (ee != null) {
-            col += "ee,";
-        }
-        if (cdrom != null) {
-            col += "cdrom,";
-        }
-        if (cite != null) {
-            col += "cite,";
-        }
-        if (crossref != null) {
-            col += "crossref,";
-        }
-        if (isbn != null) {
-            col += "isbn,";
-        }
-        if (series != null) {
-            col += "series,";
-        }
-        if (editor_id != null) {
-            col += "editor_id,";
-        }
-        if (booktitle_id != null) {
-            col += "booktitle_id,";
-        }
-        if (genre_id != null) {
-            col += "genre_id,";
-        }
-        if (publisher_id != null) {
-            col += "publisher_id,";
-        }
-
-        if (!col.isEmpty()) {
-            return col.substring(0, col.length() - 1);
-        }
-        return "";
-    }
-
-    String getValues() {
-        String val = "";
-        if (title != null) {
-            val += "'" + cleanSQL(title) + "',";
-        }
-        if (start_page != null) {
-            val += "'" + start_page + "',";
-        }
-        if (end_page != null) {
-            val += "'" + end_page + "',";
-        }
-        if (year != null) {
-            val += "'" + year + "',";
-        }
-        if (volume != null) {
-            val += "'" + volume + "',";
-        }
-        if (number != null) {
-            val += "'" + number + "',";
-        }
-        if (url != null) {
-            val += "'" + cleanSQL(url) + "',";
-        }
-        if (ee != null) {
-            val += "'" + cleanSQL(ee) + "',";
-        }
-        if (cdrom != null) {
-            val += "'" + cleanSQL(cdrom) + "',";
-        }
-        if (cite != null) {
-            val += "'" + cleanSQL(cite) + "',";
-        }
-        if (crossref != null) {
-            val += "'" + cleanSQL(crossref) + "',";
-        }
-        if (isbn != null) {
-            val += "'" + cleanSQL(isbn) + "',";
-        }
-        if (series != null) {
-            val += "'" + series + "',";
-        }
-        if (editor_id != null) {
-            val += "'" + editor_id + "',";
-        }
-        if (booktitle_id != null) {
-            val += "'" + booktitle_id + "',";
-        }
-        if (genre_id != null) {
-            val += "'" + genre_id + "',";
-        }
-        if (publisher_id != null) {
-            val += "'" + publisher_id + "',";
-        }
-
-        if (!val.isEmpty()) {
-            return val.substring(0, val.length() - 1);
-        }
-        return "";
-    }
-    
+ 
     String getColAndVal() {
         String val = "";
         String col = "";
 
+        //Finalize Future Values
+        try {
+            if (editor_idFuture != null){
+                setEditor_id((Integer) editor_idFuture.get());
+            }
+            if (publisher_idFuture != null){
+                setPublisher_id((Integer) publisher_idFuture.get());
+            }
+            if (booktitle_idFuture != null){
+                setBooktitle_id((Integer) booktitle_idFuture.get());
+            }
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
+        }
+
+        //Build insert values
         if (title != null) {
             col += "title,";
             val += "'" + cleanSQL(title) + "',";
@@ -438,5 +340,49 @@ class document {
     public static String cleanSQL(String arg) {
         String rtn = arg.replace("\\", "\\\\");
         return rtn.replace("'", "''");
+    }
+
+    void setPublisher_idFuture(Future publisher_idFuture) {
+        if (this.publisher_idFuture == null) {
+            this.publisher_idFuture = publisher_idFuture;
+        } else {
+            try {
+                System.out.println("Multiple publisher_id");
+            } catch (Exception ex) {
+                System.out.println(ex.getMessage());
+            }
+        }
+    }
+
+    void setBooktitle_idFuture(Future booktitle_idFuture) {
+        if (this.booktitle_idFuture == null) {
+            this.booktitle_idFuture = booktitle_idFuture;
+        } else {
+            try {
+                System.out.println("Multiple booktitle_id");
+            } catch (Exception ex) {
+                System.out.println(ex.getMessage());
+            }
+        }
+    }
+
+    void setEditor_idFuture(Future editor_idFuture) {
+        if (this.editor_idFuture == null) {
+            this.editor_idFuture = editor_idFuture;
+        } else {
+            try {
+                System.out.println("Multiple editor_id");
+            } catch (Exception ex) {
+                System.out.println(ex.getMessage());
+            }
+        }
+    }
+
+    void addAuthorsIDsFuture(Future peopleID) {
+        authorsIDsFuture.add(peopleID);
+    }
+
+    ArrayList<Future> getAuthorsIDsFuture() {
+        return authorsIDsFuture;
     }
 }
