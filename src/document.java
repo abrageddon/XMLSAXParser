@@ -149,6 +149,81 @@ class document {
         }
         return "";
     }
+    
+    String getColAndVal() {
+        String val = "";
+        String col = "";
+
+        if (title != null) {
+            col += "title,";
+            val += "'" + cleanSQL(title) + "',";
+        }
+        if (start_page != null) {
+            col += "start_page,";
+            val += "'" + start_page + "',";
+        }
+        if (end_page != null) {
+            col += "end_page,";
+            val += "'" + end_page + "',";
+        }
+        if (year != null) {
+            col += "year,";
+            val += "'" + year + "',";
+        }
+        if (volume != null) {
+            col += "volume,";
+            val += "'" + volume + "',";
+        }
+        if (number != null) {
+            col += "number,";
+            val += "'" + number + "',";
+        }
+        if (url != null) {
+            col += "url,";
+            val += "'" + cleanSQL(url) + "',";
+        }
+        if (ee != null) {
+            col += "ee,";
+            val += "'" + cleanSQL(ee) + "',";
+        }
+        if (cdrom != null) {
+            col += "cdrom,";
+            val += "'" + cleanSQL(cdrom) + "',";
+        }
+        if (cite != null) {
+            col += "cite,";
+            val += "'" + cleanSQL(cite) + "',";
+        }
+        if (crossref != null) {
+            col += "crossref,";
+            val += "'" + cleanSQL(crossref) + "',";
+        }
+        if (isbn != null) {
+            col += "isbn,";
+            val += "'" + cleanSQL(isbn) + "',";
+        }
+        if (series != null) {
+            col += "series,";
+            val += "'" + series + "',";
+        }
+        if (editor_id != null) {
+            col += "editor_id,";
+            val += "'" + editor_id + "',";
+        }
+        if (booktitle_id != null) {
+            col += "booktitle_id,";
+            val += "'" + booktitle_id + "',";
+        }
+        if (publisher_id != null) {
+            col += "publisher_id,";
+            val += "'" + publisher_id + "',";
+        }
+
+        if (!val.isEmpty() && !col.isEmpty() ) {
+            return "(" + col.substring(0, col.length() - 1) + ") VALUES (" + val.substring(0, val.length() - 1) + ")";
+        }
+        return "";
+    }
 
     public Integer getBooktitle_id() {
         return booktitle_id;
