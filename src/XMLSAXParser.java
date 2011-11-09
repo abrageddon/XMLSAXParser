@@ -27,11 +27,9 @@ public class XMLSAXParser extends DefaultHandler {
     private HashMap<String, Integer> booktitle;
     private HashMap<String, Integer> publishers;
     private ExecutorService eservice;
-//    private CompletionService<Object> cservice;
     private String tempVal;
     private document tempDoc;
     private Connection connection;
-//    private int threads;
 
     public XMLSAXParser() {
         genres = new HashMap<String, Integer>();
@@ -49,7 +47,7 @@ public class XMLSAXParser extends DefaultHandler {
             System.out.println(ex.getMessage());
         }
         int nrOfProcessors = Runtime.getRuntime().availableProcessors();
-        eservice = Executors.newFixedThreadPool(nrOfProcessors);
+        eservice = Executors.newFixedThreadPool(nrOfProcessors * 10);
     }
 
     public static void main(String[] args) {
@@ -112,16 +110,23 @@ public class XMLSAXParser extends DefaultHandler {
                     Statement st = connection.createStatement();
                     String addDoc = "INSERT INTO tbl_dblp_document " + tempDoc.getColAndVal();
                     Future FDocID;
-                    int docID = 0;
-                    if (useParallel){
-                        FDocID = eservice.submit(new SqlInsertTask(connection,addDoc));
-                    }else{
+                    Integer docID = 0;
+                    if (useParallel) {
+                        FDocID = eservice.submit(new SqlInsertTask(this, connection, addDoc));
+                    } else {
                         st.executeUpdate(addDoc);
                         docID = getLastID();
                     }
 
                     if (useCombinedAuthorStatement) {
                         String values = "";
+                        if (useParallel) {
+                            try {
+                                docID = (Integer) FDocID.get();
+                            } catch (InterruptedException ex) {
+                            } catch (ExecutionException ex) {
+                            }
+                        }
                         for (Integer author : tempDoc.getAuthorsIDs()) {
                             values += " ('" + docID + "', '" + author + "'),";
                         }
