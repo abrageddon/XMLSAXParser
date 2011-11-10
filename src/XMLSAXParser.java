@@ -18,7 +18,7 @@ public class XMLSAXParser extends DefaultHandler {
     private long startTime;
     private long endTime;
     //Toggle optimizations
-    private static final boolean useHashMap = true;
+    public static final boolean useHashMap = false;
     private static final boolean useParallel = true;
     //END Toggles
     private HashMap<String, Integer> genres;
@@ -50,6 +50,7 @@ public class XMLSAXParser extends DefaultHandler {
         try {
             for (int i = 0; i < maxCon; i++) {
                 connection[i] = DriverManager.getConnection("jdbc:mysql://" + server + ":3306/" + tablename, username, password);
+//                connection[i].setAutoCommit(false);//TESTING
             }
         } catch (SQLException ex) {
             System.out.println(ex.getMessage());
@@ -152,6 +153,12 @@ public class XMLSAXParser extends DefaultHandler {
                 st = connection[conNum].createStatement();
                 nextConnection();
                 st.execute("ALTER TABLE tbl_publisher DROP INDEX publisher_name");
+
+
+//                for (int i = 0; i < maxCon; i++) {
+//                    connection[i].commit();//TESTING
+//                    connection[i].close();
+//                }
             } catch (SQLException ex) {
                 System.out.println(ex.getMessage());
             }
@@ -221,14 +228,14 @@ public class XMLSAXParser extends DefaultHandler {
                 }
 
             } else if (qName.equalsIgnoreCase("Author")) {
-                if (useParallel && useHashMap) {
+                if (useParallel) {
                     tempDoc.addAuthorsIDsFuture(eservice.submit(new SqlGetIDTask(connection[conNum], people, "tbl_people", "name", tempVal.substring(0, Math.min(tempVal.length(), 61)).trim())));
                     nextConnection();
                 } else {
                     tempDoc.addAuthorsIDs(getPersonID(tempVal.trim()));
                 }
             } else if (qName.equalsIgnoreCase("Editor")) {
-                if (useParallel && useHashMap) {
+                if (useParallel) {
                     Future err = tempDoc.setEditor_idFuture(eservice.submit(new SqlGetIDTask(connection[conNum], people, "tbl_people", "name", tempVal.substring(0, Math.min(tempVal.length(), 61)).trim())));
                     nextConnection();
                     if (err != null) {
@@ -238,7 +245,7 @@ public class XMLSAXParser extends DefaultHandler {
                     tempDoc.setEditor_id(getPersonID(tempVal.substring(0, Math.min(tempVal.length(), 61)).trim()));
                 }
             } else if (qName.equalsIgnoreCase("Booktitle")) {
-                if (useParallel && useHashMap) {
+                if (useParallel) {
                     Future err = tempDoc.setBooktitle_idFuture(eservice.submit(new SqlGetIDTask(connection[conNum], booktitle, "tbl_booktitle", "title", tempVal.substring(0, Math.min(tempVal.length(), 300)).trim())));
                     nextConnection();
                     if (err != null) {
@@ -248,7 +255,7 @@ public class XMLSAXParser extends DefaultHandler {
                     tempDoc.setBooktitle_id(getBooktitleID(tempVal.substring(0, Math.min(tempVal.length(), 300)).trim()));
                 }
             } else if (qName.equalsIgnoreCase("Publisher")) {
-                if (useParallel && useHashMap) {
+                if (useParallel) {
                     Future err = tempDoc.setPublisher_idFuture(eservice.submit(new SqlGetIDTask(connection[conNum], publishers, "tbl_publisher", "publisher_name", tempVal.substring(0, Math.min(tempVal.length(), 300)).trim())));
                     nextConnection();
                     if (err != null) {

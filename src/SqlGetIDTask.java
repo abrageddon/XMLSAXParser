@@ -22,18 +22,40 @@ public class SqlGetIDTask implements Callable {
     public Object call() {
         Integer ret = 0;
 
-        if (map.containsKey(name)) {
-            return map.get(name);
-        }
-
         try {
+            if (XMLSAXParser.useHashMap) {
+                if (map.containsKey(name)) {
+                    return map.get(name);
+                }
+            } else {
+                Statement st = connection.createStatement();
+                ResultSet rs = st.executeQuery("SELECT * FROM " + table + " WHERE " + column + " = '" + name + "'");
+                if (rs.next()) {
+                    int id = rs.getInt("id");
+                    st.close();
+                    return id;
+                }
+
+            }
+
             Statement st = connection.createStatement();
             int id = 0;
 
             synchronized (map) {
                 synchronized (connection) {
-                    if (map.containsKey(name)) {
-                        return map.get(name);
+
+                    if (XMLSAXParser.useHashMap) {
+                        if (map.containsKey(name)) {
+                            return map.get(name);
+                        }
+                    } else {
+                        ResultSet rs = st.executeQuery("SELECT * FROM " + table + " WHERE " + column + " = '" + name + "'");
+                        if (rs.next()) {
+                            id = rs.getInt("id");
+                            st.close();
+                            return id;
+                        }
+
                     }
 
                     //Sync all uses of getLastID()
@@ -46,7 +68,10 @@ public class SqlGetIDTask implements Callable {
                     lastIDQ.next();
                     id = lastIDQ.getInt(1);
 
-                    map.put(name, id);
+
+                    if (XMLSAXParser.useHashMap) {
+                        map.put(name, id);
+                    }
                 }
             }
 
