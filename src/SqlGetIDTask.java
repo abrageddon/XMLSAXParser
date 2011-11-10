@@ -22,25 +22,35 @@ public class SqlGetIDTask implements Callable {
     public Object call() {
         Integer ret = 0;
 
-        synchronized (map) {
-            if (map.containsKey(name)) {
-                return map.get(name);
-            }
+        if (map.containsKey(name)) {
+            return map.get(name);
         }
+
         try {
+
             Statement st = connection.createStatement();
+            int id = 0;
+
             ResultSet results = st.executeQuery("SELECT * FROM " + table + " WHERE " + column + " = '" + cleanSQL(name) + "'");
             if (results.next()) {
-                int id = results.getInt("id");
+                System.out.println(name);
+                id = results.getInt("id");
                 st.close();
-
-                synchronized (map) {
-                    map.put(name, id);
-                }
+                map.put(name, id);
                 return id;
-            } else {
-                int id;
-                st = connection.createStatement();
+            }
+            st = connection.createStatement();
+
+            synchronized (map) {
+                    results = st.executeQuery("SELECT * FROM " + table + " WHERE " + column + " = '" + cleanSQL(name) + "'");
+                    if (results.next()) {
+                        id = results.getInt("id");
+                        st.close();
+                        map.put(name, id);
+                        return id;
+                    }
+                    st = connection.createStatement();
+
                 //Sync all uses of getLastID()
                 synchronized (connection) {
                     st.executeUpdate("INSERT INTO " + table + " (" + column + ") VALUE ('" + cleanSQL(name) + "')");
@@ -51,12 +61,9 @@ public class SqlGetIDTask implements Callable {
                 }
                 st.close();
 
-                synchronized (map) {
-                    map.put(name, id);
-                }
-                return id;
-
+                map.put(name, id);
             }
+            return id;
         } catch (SQLException ex) {
             System.out.println(ex.getMessage());
         }

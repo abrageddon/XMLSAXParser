@@ -5,12 +5,12 @@ import java.util.concurrent.*;
 public class SqlInsertTask implements Callable {
 
     private String SQLQ;
-    private Connection conn;
+    private Connection connection;
     private document doc;
 
     SqlInsertTask(Connection connection, String SQLQuery) {
         this.SQLQ = SQLQuery;
-        this.conn = connection;
+        this.connection = connection;
     }
 
     SqlInsertTask(Connection connection, document tempDoc) {
@@ -25,10 +25,10 @@ public class SqlInsertTask implements Callable {
                 SQLQ += doc.getColAndVal();
             }
             //Sync to parent to prevent adding doc before getting the last one's ID
-            Statement st = conn.createStatement();
-            synchronized (conn) {
+            Statement st = connection.createStatement();
+            synchronized (connection) {
                 st.executeUpdate(SQLQ);
-                st = conn.createStatement();
+                st = connection.createStatement();
                 ResultSet lastIDQ = st.executeQuery("SELECT LAST_INSERT_ID()");
                 lastIDQ.next();
                 rtn = lastIDQ.getInt(1);

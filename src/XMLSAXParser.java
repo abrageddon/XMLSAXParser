@@ -19,7 +19,6 @@ public class XMLSAXParser extends DefaultHandler {
     private long endTime;
     //Toggle optimizations
     private static final boolean useHashMap = true;
-    private static final boolean useCombinedAuthorStatement = false;
     private static final boolean useParallel = true;
     //END Toggles
     private HashMap<String, Integer> genres;
@@ -29,12 +28,10 @@ public class XMLSAXParser extends DefaultHandler {
     private ExecutorService eservice;
     private String tempVal;
     private document tempDoc;
-    private Connection docConn;
-    private Connection authorConn;
-    private Connection genreConn;
-    private Connection peopleConn;
-    private Connection booktitleConn;
-    private Connection publisherConn;
+    //Connection Pool
+    private Connection[] connection;
+    private int conNum;
+    private static final int maxCon = 6;
 
     public XMLSAXParser() {
         genres = new HashMap<String, Integer>();
@@ -42,17 +39,18 @@ public class XMLSAXParser extends DefaultHandler {
         booktitle = new HashMap<String, Integer>();
         publishers = new HashMap<String, Integer>();
 
+
+        conNum = 0;
+        connection = new Connection[maxCon];
+
         String password = "testpass";
         String username = "testuser";
         String server = "localhost";
         String tablename = "bookdb";
         try {
-            docConn = DriverManager.getConnection("jdbc:mysql://" + server + ":3306/" + tablename, username, password);
-            authorConn = DriverManager.getConnection("jdbc:mysql://" + server + ":3306/" + tablename, username, password);
-            genreConn = DriverManager.getConnection("jdbc:mysql://" + server + ":3306/" + tablename, username, password);
-            peopleConn = DriverManager.getConnection("jdbc:mysql://" + server + ":3306/" + tablename, username, password);
-            booktitleConn = DriverManager.getConnection("jdbc:mysql://" + server + ":3306/" + tablename, username, password);
-            publisherConn = DriverManager.getConnection("jdbc:mysql://" + server + ":3306/" + tablename, username, password);
+            for (int i = 0 ; i < maxCon ; i++){
+                connection[i] = DriverManager.getConnection("jdbc:mysql://" + server + ":3306/" + tablename, username, password);
+            }
         } catch (SQLException ex) {
             System.out.println(ex.getMessage());
         }
@@ -65,6 +63,7 @@ public class XMLSAXParser extends DefaultHandler {
     public static void main(String[] args) {
         XMLSAXParser spe = new XMLSAXParser();
         spe.runExample();
+        System.exit(0);
     }
 
     public void runExample() {
@@ -85,16 +84,30 @@ public class XMLSAXParser extends DefaultHandler {
 //            sp.parse("final-data.xml", this);//=============SMALL
             sp.parse("dblp-data.xml", this);//================LARGE
 
-            System.out.println("Parsing Complete (" + (System.currentTimeMillis() - startTime) + " ms): Waiting for MYSQL to finish...");
-            try {
-                while (!eservice.awaitTermination(1, TimeUnit.SECONDS)) {
-                    //Wait till threads are done, check each second
+            if (useParallel) {
+                System.out.println("Parsing Complete (" + (System.currentTimeMillis() - startTime) + " ms): Waiting for MYSQL to finish...");
+                try {
+                    //Stop addition of new parallels
+                    eservice.shutdown();
+                    int i = 0;
+                    //Wait for processes to finish
+                    while (!eservice.awaitTermination(10, TimeUnit.SECONDS)) {
+                        //Wait till threads are done, check each second
+                        System.out.print(".");
+
+                        if (++i % 6 == 0) {
+                            System.out.println();
+                        }
+
+                    }
+
+//                eservice.wait();
+                } catch (InterruptedException ex) {
+                    System.out.println(ex.getMessage());
                 }
-            } catch (InterruptedException ex) {
-                System.out.println(ex.getMessage());
             }
             endTime = System.currentTimeMillis();
-            System.out.println("Total Execution Time: " + (endTime - startTime));
+            System.out.println("Total Execution Time: " + (endTime - startTime) + " ms");
 
 
         } catch (SAXException se) {
@@ -112,7 +125,8 @@ public class XMLSAXParser extends DefaultHandler {
         tempVal = "";
         if (isGenreElement(qName)) {
             if (useParallel) {
-                tempDoc = new document(eservice.submit(new SqlGetIDTask(genreConn, genres, "tbl_genres", "genre_name", tempVal)));
+                tempDoc = new document(eservice.submit(new SqlGetIDTask(connection[conNum], genres, "tbl_genres", "genre_name", tempVal)));
+                nextConnection();
             } else {
                 tempDoc = new document(getGenreID(qName));
             }
@@ -134,46 +148,23 @@ public class XMLSAXParser extends DefaultHandler {
                     Future FDocID;
                     Integer docID = 0;
                     if (useParallel) {
-                        FDocID = eservice.submit(new SqlInsertTask(docConn, tempDoc));
+                        FDocID = eservice.submit(new SqlInsertTask(connection[conNum], tempDoc));
+                        nextConnection();
+                        for (Future FAuthor : tempDoc.getAuthorsIDsFuture()) {
+                            eservice.submit(new SqlTask(connection[conNum], "INSERT INTO tbl_author_document_mapping (doc_id, author_id) VALUES ", FDocID, FAuthor));
+                            nextConnection();
+                        }
                     } else {
-                        st = docConn.createStatement();
+                        st = connection[conNum].createStatement();
                         st.executeUpdate("INSERT INTO tbl_dblp_document " + tempDoc.getColAndVal());
-                        docID = getLastID(docConn);
+                        docID = getLastID(connection[conNum]);
+                        nextConnection();
+                        for (Integer author : tempDoc.getAuthorsIDs()) {
+                            st = connection[conNum].createStatement();
+                            st.executeUpdate("INSERT INTO tbl_author_document_mapping (doc_id, author_id) VALUES ('" + docID + "','" + author + "')");
+                        }
                     }
 
-                    if (useCombinedAuthorStatement) {
-                        String values = "";
-                        if (useParallel) {
-                            try {
-                                docID = (Integer) FDocID.get();
-                            } catch (InterruptedException ex) {
-                            } catch (ExecutionException ex) {
-                            }
-                        }
-                        for (Integer author : tempDoc.getAuthorsIDs()) {
-                            values += " ('" + docID + "', '" + author + "'),";
-                        }
-                        if (!values.isEmpty()) {
-                            values = values.substring(0, values.length() - 1);
-                            if (useParallel) {
-                                eservice.submit(new SqlTask(authorConn, "INSERT INTO tbl_author_document_mapping (doc_id, author_id) VALUES " + values));
-                            } else {
-                                st = authorConn.createStatement();
-                                st.executeUpdate("INSERT INTO tbl_author_document_mapping (doc_id, author_id) VALUES " + values);
-                            }
-                        }
-                    } else {
-                        if (useParallel) {
-                            for (Future FAuthor : tempDoc.getAuthorsIDsFuture()) {
-                                eservice.submit(new SqlTask(authorConn, "INSERT INTO tbl_author_document_mapping (doc_id, author_id) VALUES ", FDocID, FAuthor));
-                            }
-                        } else {
-                            for (Integer author : tempDoc.getAuthorsIDs()) {
-                                st = authorConn.createStatement();
-                                st.executeUpdate("INSERT INTO tbl_author_document_mapping (doc_id, author_id) VALUES ('" + docID + "','" + author + "')");
-                            }
-                        }
-                    }
                     if (st != null) {
                         st.close();
                     }
@@ -183,25 +174,29 @@ public class XMLSAXParser extends DefaultHandler {
 
             } else if (qName.equalsIgnoreCase("Author")) {
                 if (useParallel && useHashMap) {
-                    tempDoc.addAuthorsIDsFuture(eservice.submit(new SqlGetIDTask(peopleConn, people, "tbl_people", "name", tempVal.substring(0, Math.min(tempVal.length(), 61)).trim())));
+                    tempDoc.addAuthorsIDsFuture(eservice.submit(new SqlGetIDTask(connection[conNum], people, "tbl_people", "name", tempVal.substring(0, Math.min(tempVal.length(), 61)).trim())));
+                    nextConnection();
                 } else {
                     tempDoc.addAuthorsIDs(getPersonID(tempVal.trim()));
                 }
             } else if (qName.equalsIgnoreCase("Editor")) {
                 if (useParallel && useHashMap) {
-                    tempDoc.setEditor_idFuture(eservice.submit(new SqlGetIDTask(peopleConn, people, "tbl_people", "name", tempVal.substring(0, Math.min(tempVal.length(), 61)).trim())));
+                    tempDoc.setEditor_idFuture(eservice.submit(new SqlGetIDTask(connection[conNum], people, "tbl_people", "name", tempVal.substring(0, Math.min(tempVal.length(), 61)).trim())));
+                    nextConnection();
                 } else {
                     tempDoc.setEditor_id(getPersonID(tempVal.substring(0, Math.min(tempVal.length(), 61)).trim()));
                 }
             } else if (qName.equalsIgnoreCase("Booktitle")) {
                 if (useParallel && useHashMap) {
-                    tempDoc.setBooktitle_idFuture(eservice.submit(new SqlGetIDTask(booktitleConn, booktitle, "tbl_booktitle", "title", tempVal.substring(0, Math.min(tempVal.length(), 300)).trim())));
+                    tempDoc.setBooktitle_idFuture(eservice.submit(new SqlGetIDTask(connection[conNum], booktitle, "tbl_booktitle", "title", tempVal.substring(0, Math.min(tempVal.length(), 300)).trim())));
+                    nextConnection();
                 } else {
                     tempDoc.setBooktitle_id(getBooktitleID(tempVal.substring(0, Math.min(tempVal.length(), 300)).trim()));
                 }
             } else if (qName.equalsIgnoreCase("Publisher")) {
                 if (useParallel && useHashMap) {
-                    tempDoc.setPublisher_idFuture(eservice.submit(new SqlGetIDTask(publisherConn, publishers, "tbl_publisher", "publisher_name", tempVal.substring(0, Math.min(tempVal.length(), 300)).trim())));
+                    tempDoc.setPublisher_idFuture(eservice.submit(new SqlGetIDTask(connection[conNum], publishers, "tbl_publisher", "publisher_name", tempVal.substring(0, Math.min(tempVal.length(), 300)).trim())));
+                    nextConnection();
                 } else {
                     tempDoc.setPublisher_id(getPublisherID(tempVal.substring(0, Math.min(tempVal.length(), 300)).trim()));
                 }
@@ -255,7 +250,8 @@ public class XMLSAXParser extends DefaultHandler {
             return genres.get(genreName);
         }
         try {
-            Statement st = genreConn.createStatement();
+            Statement st = connection[conNum].createStatement();
+            nextConnection();
             ResultSet genreID = st.executeQuery("SELECT * FROM tbl_genres WHERE genre_name = '" + cleanSQL(genreName) + "'");
             if (genreID.next()) {
                 int id = genreID.getInt("id");
@@ -266,12 +262,13 @@ public class XMLSAXParser extends DefaultHandler {
                 return id;
             } else {
                 int id;
-                st = genreConn.createStatement();
+                st = connection[conNum].createStatement();
                 //Sync all uses of getLastID()
                 synchronized (this) {
                     st.executeUpdate("INSERT INTO tbl_genres (genre_name) VALUE ('" + cleanSQL(genreName) + "')");
-                    id = getLastID(genreConn);
+                    id = getLastID(connection[conNum]);
                 }
+                nextConnection();
                 st.close();
                 if (useHashMap) {
                     genres.put(genreName, id);
@@ -290,7 +287,8 @@ public class XMLSAXParser extends DefaultHandler {
             return people.get(personName);
         }
         try {
-            Statement st = peopleConn.createStatement();
+            Statement st = connection[conNum].createStatement();
+            nextConnection();
             ResultSet personID = st.executeQuery("SELECT * FROM tbl_people WHERE name = '" + cleanSQL(personName) + "'");
             if (personID.next()) {
                 int id = personID.getInt("id");
@@ -301,12 +299,13 @@ public class XMLSAXParser extends DefaultHandler {
                 return id;
             } else {
                 int id;
-                st = peopleConn.createStatement();
+                st = connection[conNum].createStatement();
                 //Sync all uses of getLastID()
                 synchronized (this) {
                     st.executeUpdate("INSERT INTO tbl_people (name) VALUE ('" + cleanSQL(personName) + "')");
-                    id = getLastID(peopleConn);
+                    id = getLastID(connection[conNum]);
                 }
+                nextConnection();
                 st.close();
                 if (useHashMap) {
                     people.put(personName, id);
@@ -325,7 +324,8 @@ public class XMLSAXParser extends DefaultHandler {
             return booktitle.get(booktitleName);
         }
         try {
-            Statement st = booktitleConn.createStatement();
+            Statement st = connection[conNum].createStatement();
+            nextConnection();
             ResultSet booktitleID = st.executeQuery("SELECT * FROM tbl_booktitle WHERE title = '" + cleanSQL(booktitleName) + "'");
             if (booktitleID.next()) {
                 int id = booktitleID.getInt("id");
@@ -336,12 +336,13 @@ public class XMLSAXParser extends DefaultHandler {
                 return id;
             } else {
                 int id;
-                st = booktitleConn.createStatement();
+                st = connection[conNum].createStatement();
                 //Sync all uses of getLastID()
                 synchronized (this) {
                     st.executeUpdate("INSERT INTO tbl_booktitle (title) VALUE ('" + cleanSQL(booktitleName) + "')");
-                    id = getLastID(booktitleConn);
+                    id = getLastID(connection[conNum]);
                 }
+                nextConnection();
                 st.close();
                 if (useHashMap) {
                     booktitle.put(booktitleName, id);
@@ -360,7 +361,8 @@ public class XMLSAXParser extends DefaultHandler {
             return publishers.get(publisherName);
         }
         try {
-            Statement st = publisherConn.createStatement();
+            Statement st = connection[conNum].createStatement();
+            nextConnection();
             ResultSet publisherID = st.executeQuery("SELECT * FROM tbl_publisher WHERE publisher_name = '" + cleanSQL(publisherName) + "'");
             if (publisherID.next()) {
                 int id = publisherID.getInt("id");
@@ -371,12 +373,13 @@ public class XMLSAXParser extends DefaultHandler {
                 return id;
             } else {
                 int id;
-                st = publisherConn.createStatement();
+                st = connection[conNum].createStatement();
                 //Sync all uses of getLastID()
                 synchronized (this) {
                     st.executeUpdate("INSERT INTO tbl_publisher (publisher_name) VALUE ('" + cleanSQL(publisherName) + "')");
-                    id = getLastID(publisherConn);
+                    id = getLastID(connection[conNum]);
                 }
+                nextConnection();
                 st.close();
                 if (useHashMap) {
                     publishers.put(publisherName, id);
@@ -405,5 +408,9 @@ public class XMLSAXParser extends DefaultHandler {
         } else {
             return null;
         }
+    }
+
+    private void nextConnection() {
+        conNum = ++conNum % maxCon;
     }
 }
