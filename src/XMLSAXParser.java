@@ -64,7 +64,6 @@ public class XMLSAXParser extends DefaultHandler {
     public static void main(String[] args) {
         XMLSAXParser spe = new XMLSAXParser();
         spe.runExample();
-        System.exit(0);
     }
 
     public void runExample() {
@@ -155,10 +154,11 @@ public class XMLSAXParser extends DefaultHandler {
                 st.execute("ALTER TABLE tbl_publisher DROP INDEX publisher_name");
 
 
-//                for (int i = 0; i < maxCon; i++) {
+                st.close();
+                for (int i = 0; i < maxCon; i++) {
 //                    connection[i].commit();//TESTING
-//                    connection[i].close();
-//                }
+                    connection[i].close();
+                }
             } catch (SQLException ex) {
                 System.out.println(ex.getMessage());
             }
