@@ -3,6 +3,8 @@ import java.io.IOException;
 import java.sql.*;
 import java.util.HashMap;
 import java.util.concurrent.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -56,7 +58,7 @@ public class XMLSAXParser extends DefaultHandler {
         }
         int nrOfProcessors = Runtime.getRuntime().availableProcessors();
         //NUMBER OF PROCS
-        eservice = Executors.newFixedThreadPool(nrOfProcessors);
+        eservice = Executors.newFixedThreadPool( Math.max(nrOfProcessors, maxCon ) * 2);
 
     }
 
@@ -78,6 +80,28 @@ public class XMLSAXParser extends DefaultHandler {
 
             //get a new instance of parser
             SAXParser sp = spf.newSAXParser();
+
+            //Make side DBs unique
+            try {
+                Statement st = connection[conNum].createStatement();
+                nextConnection();
+                st.execute("ALTER TABLE tbl_genres ADD UNIQUE (genre_name)");
+                
+                st = connection[conNum].createStatement();
+                nextConnection();
+                st.execute("ALTER TABLE tbl_people  ADD UNIQUE (name)");
+                
+                st = connection[conNum].createStatement();
+                nextConnection();
+                st.execute("ALTER TABLE tbl_booktitle ADD UNIQUE (title)");
+                
+                st = connection[conNum].createStatement();
+                nextConnection();
+                st.execute("ALTER TABLE tbl_publisher ADD UNIQUE (publisher_name)");
+            } catch (SQLException ex) {
+                    System.out.println(ex.getMessage());
+            }
+
 
             //parse the file and also register this class for call backs
             startTime = System.currentTimeMillis();
@@ -110,6 +134,26 @@ public class XMLSAXParser extends DefaultHandler {
             System.out.println("Total Execution Time: " + (endTime - startTime) + " ms");
 
 
+            try {
+                Statement st = connection[conNum].createStatement();
+                nextConnection();
+                st.execute("ALTER TABLE tbl_genres DROP INDEX genre_name;");
+
+                st = connection[conNum].createStatement();
+                nextConnection();
+                st.execute("ALTER TABLE tbl_people DROP INDEX name");
+
+                st = connection[conNum].createStatement();
+                nextConnection();
+                st.execute("ALTER TABLE tbl_booktitle DROP INDEX title");
+
+                st = connection[conNum].createStatement();
+                nextConnection();
+                st.execute("ALTER TABLE tbl_publisher DROP INDEX publisher_name");
+            } catch (SQLException ex) {
+                    System.out.println(ex.getMessage());
+            }
+
         } catch (SAXException se) {
             System.out.println(se.getMessage());
         } catch (ParserConfigurationException pce) {
@@ -125,7 +169,7 @@ public class XMLSAXParser extends DefaultHandler {
         tempVal = "";
         if (isGenreElement(qName)) {
             if (useParallel) {
-                tempDoc = new document(eservice.submit(new SqlGetIDTask(connection[conNum], genres, "tbl_genres", "genre_name", tempVal)));
+                tempDoc = new document(eservice.submit(new SqlGetIDTask(connection[conNum], genres, "tbl_genres", "genre_name", qName)));
                 nextConnection();
             } else {
                 tempDoc = new document(getGenreID(qName));

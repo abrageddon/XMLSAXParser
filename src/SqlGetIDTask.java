@@ -14,7 +14,7 @@ public class SqlGetIDTask implements Callable {
     public SqlGetIDTask(Connection connection, HashMap<String, Integer> map, String table, String column, String name) {
         this.connection = connection;
         this.map = map;
-        this.name = name;
+        this.name = cleanSQL(name.replaceAll("\n", ""));
         this.table = table;
         this.column = column;
     }
@@ -31,9 +31,8 @@ public class SqlGetIDTask implements Callable {
             Statement st = connection.createStatement();
             int id = 0;
 
-            ResultSet results = st.executeQuery("SELECT * FROM " + table + " WHERE " + column + " = '" + cleanSQL(name) + "'");
+            ResultSet results = st.executeQuery("SELECT * FROM " + table + " WHERE " + column + " = '" + name + "'");
             if (results.next()) {
-                System.out.println(name);
                 id = results.getInt("id");
                 st.close();
                 map.put(name, id);
@@ -42,18 +41,22 @@ public class SqlGetIDTask implements Callable {
             st = connection.createStatement();
 
             synchronized (map) {
-                    results = st.executeQuery("SELECT * FROM " + table + " WHERE " + column + " = '" + cleanSQL(name) + "'");
-                    if (results.next()) {
-                        id = results.getInt("id");
-                        st.close();
-                        map.put(name, id);
-                        return id;
-                    }
-                    st = connection.createStatement();
+//                results = st.executeQuery("SELECT * FROM " + table + " WHERE " + column + " = '" + cleanSQL(name) + "'");
+//                if (results.next()) {
+//                    id = results.getInt("id");
+//                    st.close();
+//                    return id;
+//                }
+//                st = connection.createStatement();
 
                 //Sync all uses of getLastID()
                 synchronized (connection) {
-                    st.executeUpdate("INSERT INTO " + table + " (" + column + ") VALUE ('" + cleanSQL(name) + "')");
+
+                    //Made column unique so just throw it in there
+                    st.executeUpdate("INSERT IGNORE INTO " + table + " (" + column + ") VALUE ('" + name + "')");
+
+                    //If col is no unique must add carfully
+//                    st.executeUpdate("INSERT INTO " + table + " (" + column + ") VALUE ('" + name + "')");
                     st = connection.createStatement();
                     ResultSet lastIDQ = st.executeQuery("SELECT LAST_INSERT_ID()");
                     lastIDQ.next();
