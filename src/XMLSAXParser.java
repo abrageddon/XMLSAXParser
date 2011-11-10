@@ -50,7 +50,7 @@ public class XMLSAXParser extends DefaultHandler {
         String server = "localhost";
         String tablename = "bookdb";
         try {
-            for (int i = 0 ; i < maxCon ; i++){
+            for (int i = 0; i < maxCon; i++) {
                 connection[i] = DriverManager.getConnection("jdbc:mysql://" + server + ":3306/" + tablename, username, password);
             }
         } catch (SQLException ex) {
@@ -58,7 +58,7 @@ public class XMLSAXParser extends DefaultHandler {
         }
         int nrOfProcessors = Runtime.getRuntime().availableProcessors();
         //NUMBER OF PROCS
-        eservice = Executors.newFixedThreadPool( Math.max(nrOfProcessors, maxCon ) * 2);
+        eservice = Executors.newFixedThreadPool(Math.max(nrOfProcessors, maxCon) * 2);
 
     }
 
@@ -86,20 +86,20 @@ public class XMLSAXParser extends DefaultHandler {
                 Statement st = connection[conNum].createStatement();
                 nextConnection();
                 st.execute("ALTER TABLE tbl_genres ADD UNIQUE (genre_name)");
-                
+
                 st = connection[conNum].createStatement();
                 nextConnection();
                 st.execute("ALTER TABLE tbl_people  ADD UNIQUE (name)");
-                
+
                 st = connection[conNum].createStatement();
                 nextConnection();
                 st.execute("ALTER TABLE tbl_booktitle ADD UNIQUE (title)");
-                
+
                 st = connection[conNum].createStatement();
                 nextConnection();
                 st.execute("ALTER TABLE tbl_publisher ADD UNIQUE (publisher_name)");
             } catch (SQLException ex) {
-                    System.out.println(ex.getMessage());
+                System.out.println(ex.getMessage());
             }
 
 
@@ -115,17 +115,21 @@ public class XMLSAXParser extends DefaultHandler {
                     eservice.shutdown();
                     int i = 0;
                     //Wait for processes to finish
-                    while (!eservice.awaitTermination(10, TimeUnit.SECONDS)) {
+                    while (!eservice.awaitTermination(1, TimeUnit.SECONDS)) {
                         //Wait till threads are done, check each second
-                        System.out.print(".");
+                        i++;
 
-                        if (++i % 6 == 0) {
+                        if (i % 10 == 0) {
+                            System.out.print("|");
+                        } else {
+                            System.out.print(".");
+                        }
+
+                        if (i % 60 == 0) {
                             System.out.println();
                         }
 
                     }
-
-//                eservice.wait();
                 } catch (InterruptedException ex) {
                     System.out.println(ex.getMessage());
                 }
@@ -133,7 +137,7 @@ public class XMLSAXParser extends DefaultHandler {
             endTime = System.currentTimeMillis();
             System.out.println("Total Execution Time: " + (endTime - startTime) + " ms");
 
-
+            //remove special conditions for parsing
             try {
                 Statement st = connection[conNum].createStatement();
                 nextConnection();
@@ -151,7 +155,7 @@ public class XMLSAXParser extends DefaultHandler {
                 nextConnection();
                 st.execute("ALTER TABLE tbl_publisher DROP INDEX publisher_name");
             } catch (SQLException ex) {
-                    System.out.println(ex.getMessage());
+                System.out.println(ex.getMessage());
             }
 
         } catch (SAXException se) {

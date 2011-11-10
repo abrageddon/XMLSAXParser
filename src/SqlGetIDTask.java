@@ -27,27 +27,22 @@ public class SqlGetIDTask implements Callable {
         }
 
         try {
-
             Statement st = connection.createStatement();
             int id = 0;
 
-            ResultSet results = st.executeQuery("SELECT * FROM " + table + " WHERE " + column + " = '" + name + "'");
-            if (results.next()) {
-                id = results.getInt("id");
-                st.close();
-                map.put(name, id);
-                return id;
-            }
-            st = connection.createStatement();
-
             synchronized (map) {
-//                results = st.executeQuery("SELECT * FROM " + table + " WHERE " + column + " = '" + cleanSQL(name) + "'");
-//                if (results.next()) {
-//                    id = results.getInt("id");
-//                    st.close();
-//                    return id;
-//                }
-//                st = connection.createStatement();
+                if (map.containsKey(name)) {
+                    return map.get(name);
+                }
+
+                ResultSet results = st.executeQuery("SELECT * FROM " + table + " WHERE " + column + " = '" + name + "'");
+                if (results.next()) {
+                    id = results.getInt("id");
+                    st.close();
+                    map.put(name, id);
+                    return id;
+                }
+                st = connection.createStatement();
 
                 //Sync all uses of getLastID()
                 synchronized (connection) {
@@ -55,17 +50,16 @@ public class SqlGetIDTask implements Callable {
                     //Made column unique so just throw it in there
                     st.executeUpdate("INSERT IGNORE INTO " + table + " (" + column + ") VALUE ('" + name + "')");
 
-                    //If col is no unique must add carfully
-//                    st.executeUpdate("INSERT INTO " + table + " (" + column + ") VALUE ('" + name + "')");
                     st = connection.createStatement();
                     ResultSet lastIDQ = st.executeQuery("SELECT LAST_INSERT_ID()");
                     lastIDQ.next();
                     id = lastIDQ.getInt(1);
                 }
-                st.close();
 
                 map.put(name, id);
             }
+
+            st.close();
             return id;
         } catch (SQLException ex) {
             System.out.println(ex.getMessage());
