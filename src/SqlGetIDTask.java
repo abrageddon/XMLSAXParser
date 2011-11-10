@@ -35,15 +35,6 @@ public class SqlGetIDTask implements Callable {
                     return map.get(name);
                 }
 
-                ResultSet results = st.executeQuery("SELECT * FROM " + table + " WHERE " + column + " = '" + name + "'");
-                if (results.next()) {
-                    id = results.getInt("id");
-                    st.close();
-                    map.put(name, id);
-                    return id;
-                }
-                st = connection.createStatement();
-
                 //Sync all uses of getLastID()
                 synchronized (connection) {
 
