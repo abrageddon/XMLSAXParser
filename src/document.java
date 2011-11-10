@@ -125,6 +125,10 @@ class document {
             col += "series,";
             val += "'" + series + "',";
         }
+        if (genre_id != null) {
+            col += "genre_id,";
+            val += "'" + genre_id + "',";
+        }
         if (editor_id != null) {
             col += "editor_id,";
             val += "'" + editor_id + "',";

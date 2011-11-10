@@ -211,6 +211,8 @@ public class XMLSAXParser extends DefaultHandler {
                         }
                     }
 
+                    tempDoc = null;
+
                     if (st != null) {
                         st.close();
                     }
