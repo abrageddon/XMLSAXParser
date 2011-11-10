@@ -31,12 +31,12 @@ public class SqlGetIDTask implements Callable {
             int id = 0;
 
             synchronized (map) {
-                if (map.containsKey(name)) {
-                    return map.get(name);
-                }
-
-                //Sync all uses of getLastID()
                 synchronized (connection) {
+                    if (map.containsKey(name)) {
+                        return map.get(name);
+                    }
+
+                    //Sync all uses of getLastID()
 
                     //Made column unique so just throw it in there
                     st.executeUpdate("INSERT IGNORE INTO " + table + " (" + column + ") VALUE ('" + name + "')");
@@ -45,9 +45,9 @@ public class SqlGetIDTask implements Callable {
                     ResultSet lastIDQ = st.executeQuery("SELECT LAST_INSERT_ID()");
                     lastIDQ.next();
                     id = lastIDQ.getInt(1);
-                }
 
-                map.put(name, id);
+                    map.put(name, id);
+                }
             }
 
             st.close();
