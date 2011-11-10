@@ -3,8 +3,6 @@ import java.io.IOException;
 import java.sql.*;
 import java.util.HashMap;
 import java.util.concurrent.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -109,7 +107,7 @@ public class XMLSAXParser extends DefaultHandler {
             sp.parse("dblp-data.xml", this);//================LARGE
 
             if (useParallel) {
-                System.out.println("Parsing Complete (" + (System.currentTimeMillis() - startTime) + " ms): Waiting for MYSQL to finish...");
+                System.out.println("========== Parsing Complete (" + (System.currentTimeMillis() - startTime) + " ms): Waiting for MYSQL to finish... ==========");
                 try {
                     //Stop addition of new parallels
                     eservice.shutdown();
@@ -135,7 +133,7 @@ public class XMLSAXParser extends DefaultHandler {
                 }
             }
             endTime = System.currentTimeMillis();
-            System.out.println("\nTotal Execution Time: " + (endTime - startTime) + " ms");
+            System.out.println("\n========== Total Execution Time: " + (endTime - startTime) + " ms ==========");
 
             //remove special conditions for parsing
             try {
@@ -229,22 +227,31 @@ public class XMLSAXParser extends DefaultHandler {
                 }
             } else if (qName.equalsIgnoreCase("Editor")) {
                 if (useParallel && useHashMap) {
-                    tempDoc.setEditor_idFuture(eservice.submit(new SqlGetIDTask(connection[conNum], people, "tbl_people", "name", tempVal.substring(0, Math.min(tempVal.length(), 61)).trim())));
+                    Future err = tempDoc.setEditor_idFuture(eservice.submit(new SqlGetIDTask(connection[conNum], people, "tbl_people", "name", tempVal.substring(0, Math.min(tempVal.length(), 61)).trim())));
                     nextConnection();
+                    if (err != null){
+                        eservice.submit(new printTask("Multiple editor_id: ", err));
+                    }
                 } else {
                     tempDoc.setEditor_id(getPersonID(tempVal.substring(0, Math.min(tempVal.length(), 61)).trim()));
                 }
             } else if (qName.equalsIgnoreCase("Booktitle")) {
                 if (useParallel && useHashMap) {
-                    tempDoc.setBooktitle_idFuture(eservice.submit(new SqlGetIDTask(connection[conNum], booktitle, "tbl_booktitle", "title", tempVal.substring(0, Math.min(tempVal.length(), 300)).trim())));
+                    Future err = tempDoc.setBooktitle_idFuture(eservice.submit(new SqlGetIDTask(connection[conNum], booktitle, "tbl_booktitle", "title", tempVal.substring(0, Math.min(tempVal.length(), 300)).trim())));
                     nextConnection();
+                    if (err != null){
+                        eservice.submit(new printTask("Multiple booktitle_id: ", err));
+                    }
                 } else {
                     tempDoc.setBooktitle_id(getBooktitleID(tempVal.substring(0, Math.min(tempVal.length(), 300)).trim()));
                 }
             } else if (qName.equalsIgnoreCase("Publisher")) {
                 if (useParallel && useHashMap) {
-                    tempDoc.setPublisher_idFuture(eservice.submit(new SqlGetIDTask(connection[conNum], publishers, "tbl_publisher", "publisher_name", tempVal.substring(0, Math.min(tempVal.length(), 300)).trim())));
+                    Future err = tempDoc.setPublisher_idFuture(eservice.submit(new SqlGetIDTask(connection[conNum], publishers, "tbl_publisher", "publisher_name", tempVal.substring(0, Math.min(tempVal.length(), 300)).trim())));
                     nextConnection();
+                    if (err != null){
+                        eservice.submit(new printTask("Multiple publisher_id: ", err));
+                    }
                 } else {
                     tempDoc.setPublisher_id(getPublisherID(tempVal.substring(0, Math.min(tempVal.length(), 300)).trim()));
                 }

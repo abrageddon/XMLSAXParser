@@ -351,40 +351,28 @@ class document {
         return rtn.replace("'", "''");
     }
 
-    void setPublisher_idFuture(Future publisher_idFuture) {
+    Future setPublisher_idFuture(Future publisher_idFuture) {
         if (this.publisher_idFuture == null) {
             this.publisher_idFuture = publisher_idFuture;
-        } else {
-            try {
-                System.out.println("Multiple publisher_id");
-            } catch (Exception ex) {
-                System.out.println(ex.getMessage());
-            }
+            return null;
         }
+        return publisher_idFuture;
     }
 
-    void setBooktitle_idFuture(Future booktitle_idFuture) {
+    Future setBooktitle_idFuture(Future booktitle_idFuture) {
         if (this.booktitle_idFuture == null) {
             this.booktitle_idFuture = booktitle_idFuture;
-        } else {
-            try {
-                System.out.println("Multiple booktitle_id");
-            } catch (Exception ex) {
-                System.out.println(ex.getMessage());
-            }
+            return null;
         }
+        return booktitle_idFuture;
     }
 
-    void setEditor_idFuture(Future editor_idFuture) {
+    Future setEditor_idFuture(Future editor_idFuture) {
         if (this.editor_idFuture == null) {
             this.editor_idFuture = editor_idFuture;
-        } else {
-            try {
-                System.out.println("Multiple editor_id");
-            } catch (Exception ex) {
-                System.out.println(ex.getMessage());
-            }
+            return null;
         }
+        return editor_idFuture;
     }
 
     void addAuthorsIDsFuture(Future peopleID) {
