@@ -229,7 +229,7 @@ public class XMLSAXParser extends DefaultHandler {
                 if (useParallel && useHashMap) {
                     Future err = tempDoc.setEditor_idFuture(eservice.submit(new SqlGetIDTask(connection[conNum], people, "tbl_people", "name", tempVal.substring(0, Math.min(tempVal.length(), 61)).trim())));
                     nextConnection();
-                    if (err != null){
+                    if (err != null) {
                         eservice.submit(new printTask("Multiple editor_id: ", err));
                     }
                 } else {
@@ -239,7 +239,7 @@ public class XMLSAXParser extends DefaultHandler {
                 if (useParallel && useHashMap) {
                     Future err = tempDoc.setBooktitle_idFuture(eservice.submit(new SqlGetIDTask(connection[conNum], booktitle, "tbl_booktitle", "title", tempVal.substring(0, Math.min(tempVal.length(), 300)).trim())));
                     nextConnection();
-                    if (err != null){
+                    if (err != null) {
                         eservice.submit(new printTask("Multiple booktitle_id: ", err));
                     }
                 } else {
@@ -249,7 +249,7 @@ public class XMLSAXParser extends DefaultHandler {
                 if (useParallel && useHashMap) {
                     Future err = tempDoc.setPublisher_idFuture(eservice.submit(new SqlGetIDTask(connection[conNum], publishers, "tbl_publisher", "publisher_name", tempVal.substring(0, Math.min(tempVal.length(), 300)).trim())));
                     nextConnection();
-                    if (err != null){
+                    if (err != null) {
                         eservice.submit(new printTask("Multiple publisher_id: ", err));
                     }
                 } else {
@@ -319,10 +319,8 @@ public class XMLSAXParser extends DefaultHandler {
                 int id;
                 st = connection[conNum].createStatement();
                 //Sync all uses of getLastID()
-                synchronized (this) {
-                    st.executeUpdate("INSERT INTO tbl_genres (genre_name) VALUE ('" + cleanSQL(genreName) + "')");
-                    id = getLastID(connection[conNum]);
-                }
+                st.executeUpdate("INSERT INTO tbl_genres (genre_name) VALUE ('" + cleanSQL(genreName) + "')");
+                id = getLastID(connection[conNum]);
                 nextConnection();
                 st.close();
                 if (useHashMap) {
@@ -356,10 +354,8 @@ public class XMLSAXParser extends DefaultHandler {
                 int id;
                 st = connection[conNum].createStatement();
                 //Sync all uses of getLastID()
-                synchronized (this) {
-                    st.executeUpdate("INSERT INTO tbl_people (name) VALUE ('" + cleanSQL(personName) + "')");
-                    id = getLastID(connection[conNum]);
-                }
+                st.executeUpdate("INSERT INTO tbl_people (name) VALUE ('" + cleanSQL(personName) + "')");
+                id = getLastID(connection[conNum]);
                 nextConnection();
                 st.close();
                 if (useHashMap) {
@@ -393,10 +389,8 @@ public class XMLSAXParser extends DefaultHandler {
                 int id;
                 st = connection[conNum].createStatement();
                 //Sync all uses of getLastID()
-                synchronized (this) {
-                    st.executeUpdate("INSERT INTO tbl_booktitle (title) VALUE ('" + cleanSQL(booktitleName) + "')");
-                    id = getLastID(connection[conNum]);
-                }
+                st.executeUpdate("INSERT INTO tbl_booktitle (title) VALUE ('" + cleanSQL(booktitleName) + "')");
+                id = getLastID(connection[conNum]);
                 nextConnection();
                 st.close();
                 if (useHashMap) {
@@ -430,10 +424,8 @@ public class XMLSAXParser extends DefaultHandler {
                 int id;
                 st = connection[conNum].createStatement();
                 //Sync all uses of getLastID()
-                synchronized (this) {
-                    st.executeUpdate("INSERT INTO tbl_publisher (publisher_name) VALUE ('" + cleanSQL(publisherName) + "')");
-                    id = getLastID(connection[conNum]);
-                }
+                st.executeUpdate("INSERT INTO tbl_publisher (publisher_name) VALUE ('" + cleanSQL(publisherName) + "')");
+                id = getLastID(connection[conNum]);
                 nextConnection();
                 st.close();
                 if (useHashMap) {
