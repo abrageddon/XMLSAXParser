@@ -18,7 +18,7 @@ public class XMLSAXParser extends DefaultHandler {
     private long startTime;
     private long endTime;
     //Toggle optimizations
-    public static final boolean useHashMap = false;
+    public static final boolean useHashMap = true;
     private static final boolean useParallel = true;
     //END Toggles
     private HashMap<String, Integer> genres;
