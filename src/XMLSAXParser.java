@@ -135,7 +135,7 @@ public class XMLSAXParser extends DefaultHandler {
                 }
             }
             endTime = System.currentTimeMillis();
-            System.out.println("Total Execution Time: " + (endTime - startTime) + " ms");
+            System.out.println("\nTotal Execution Time: " + (endTime - startTime) + " ms");
 
             //remove special conditions for parsing
             try {
