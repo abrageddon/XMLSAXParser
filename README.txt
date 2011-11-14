@@ -10,4 +10,12 @@ Methods for performance enhancement:
 
 Time Reductions:
 
-  
+  No Enhancement: 20 Min
+
+  Add Unique: 1 Min 
+
+  Add Unique, HashTable: 45 Sec
+
+  Add Unique, HashTable, Threads: 35 Sec
+
+  Add Unique, HashTable, Threads, Connection Pool: 25 Sec
