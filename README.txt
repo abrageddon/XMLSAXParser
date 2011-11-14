@@ -8,11 +8,14 @@ Methods for performance enhancement:
 
   Alter Table Add Unique -- Setting the name field on the smaller databases (genres, people, booktitles, publishers) to unique prevents duplicates and speeds up inserts by creating an index.
 
-Time Reductions:
+
+Elapsed Time:
 
   No Enhancement: 20 Min
 
   Add Unique: 1 Min 
+
+  Add Unique, Threads, Connection Pool: 1 Min
 
   Add Unique, HashTable: 45 Sec
 
