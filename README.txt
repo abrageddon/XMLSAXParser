@@ -8,7 +8,6 @@ Methods for performance enhancement:
 
   Alter Table Add Unique -- Setting the name field on the smaller databases (genres, people, booktitles, publishers) to unique prevents duplicates and speeds up inserts by creating an index.
 
-
 Elapsed Time:
 
   No Enhancement: 20 Min
@@ -22,3 +21,7 @@ Elapsed Time:
   Add Unique, HashTable, Threads: 35 Sec
 
   Add Unique, HashTable, Threads, Connection Pool: 25 Sec
+
+To run on Mac OS, use the following command because java's default memory heap is too small.
+    
+    java -Xms512m -Xmx512m XMLASXParser
